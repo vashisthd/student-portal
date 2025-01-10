@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal - Attendance</title>
+    <link rel="stylesheet" href="attendence.css">
+    <script src="chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1>Welcome to the Student Portal</h1>
+            <nav>
+                <a href="/profile">Profile</a>
+                <a href="/attendance">Attendance</a>
+                <a href="/logout">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="attendance-page">
+        <div class="attendance-container">
+            <h2>Your Attendance Overview</h2>
+            <div class="attendance-details">
+                <canvas id="attendance-chart" width="300" height="300"></canvas> <!-- Smaller Pie Chart -->
+            </div>
+
+            <div class="attendance-summary">
+                <h3>Mark Attendance</h3>
+
+                <!-- Subject Selection -->
+                <label for="subject-select">Select Subject:</label>
+                <select id="subject-select">
+                    <option value="cn">Computer Networks</option>
+                    <option value="db">Database Management Systems</option>
+                    <option value="os">Operating System</option>
+                    <option value="ai">Artificial Intelligence & Soft Computing</option>
+                    <option value="cp">Competitive Programming</option>
+                </select>
+
+                <!-- Buttons for Marking Attendance -->
+                <div class="attendance-buttons">
+                    <button class="button present" onclick="markAttendance('present')">Mark Present</button>
+                    <button class="button absent" onclick="markAttendance('absent')">Mark Absent</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Student Portal</p>
+    </footer>
+
+    <script>
+        // Function to handle attendance marking
+        function markAttendance(status) {
+    const subject = document.getElementById('subject-select').value;
+
+    // Fetch the username from session
+    fetch('/get-username') // Fetch the username stored in session
+        .then(response => response.json())
+        .then(data => {
+            const username = data.username;
+
+            // Make an API call to update attendance status for the subject
+            fetch('/update-attendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    subject: subject,
+                    status: status
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Successfully marked ${status} for ${subject}`);
+                    location.reload(); // Reload to update the UI
+                } else {
+                    alert('Error marking attendance');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to mark attendance');
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching username:', error);
+            alert('Failed to fetch username from session');
+        });
+}
+
+        // Fetch attendance data and update chart
+        fetch('/attendance')
+            .then(response => response.json())
+            .then(data => {
+                const subjects = [
+                    'Computer Networks', 'Database Management Systems',
+                    'Operating System', 'Artificial Intelligence & Soft Computing',
+                    'Competitive Programming'
+                ];
+
+                const totalClasses = [
+                    data.cn_total_class, data.db_total_class, data.os_total_class,
+                    data.ai_total_class, data.cp_total_class
+                ];
+
+                const presentClasses = [
+                    data.cn_present_class, data.db_present_class, data.os_present_class,
+                    data.ai_present_class, data.cp_present_class
+                ];
+
+                const absentClasses = [
+                    data.cn_absent_class, data.db_absent_class, data.os_absent_class,
+                    data.ai_absent_class, data.cp_absent_class
+                ];
+
+                // Create Pie Chart
+                const ctx = document.getElementById('attendance-chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: subjects,
+                        datasets: [{
+                            data: presentClasses,
+                            backgroundColor: ['#36A2EB', '#FFCE56', '#FF6384', '#4BC0C0', '#FF9F40'],
+                            label: 'Present Classes'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(tooltipItem) {
+                                        let subject = tooltipItem.label;
+                                        let present = tooltipItem.raw;
+                                        let index = tooltipItem.dataIndex;
+                                        let absent = absentClasses[index];
+                                        return `${subject}: ${present} Present, ${absent} Absent`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+            })
+            .catch(error => {
+                console.error('Error fetching attendance:', error);
+                alert('Failed to load attendance data');
+            });
+    </script>
+
+</body>
+</html>

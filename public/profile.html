@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal - Profile</title>
+    <link rel="stylesheet" href="profile.css">
+</head>
+<body>
+
+    <header>
+        <h1>Welcome to the Student Portal</h1>
+        <nav>
+            <p><span id="username">Loading...</span></p>
+            <a href="/logout">Logout</a>
+            <a href="attendance.html">Attendance</a> <!-- Redirect to Attendance Page -->
+        </nav>
+    </header>
+
+    <section class="profile-container">
+        <div class="profile-details">
+            <img src="uploads/default.jpeg" alt="Profile Picture" id="profile-pic" />
+            <div class="profile-info">
+                <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
+                <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+                <p><strong>Last Name:</strong> <span id="last-name">Loading...</span></p>
+                <p><strong>Sub Section:</strong> <span id="sub-section">Loading...</span></p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 Student Portal</p>
+    </footer>
+
+    <script>
+        // Fetch the logged-in user's profile data
+        fetch('/profile')
+            .then(response => response.json())
+            .then(data => {
+                // Profile Information
+                document.getElementById('username').innerText = data.username;
+                document.getElementById('full-name').innerText = data.full_name;
+                document.getElementById('email').innerText = data.email;
+                document.getElementById('last-name').innerText = data.last_name;
+                document.getElementById('sub-section').innerText = data.sub_section;
+
+                // Profile Picture Fallback Logic
+                let profilePic = data.profile_pic || 'uploads/default.jpeg';
+                fetch(profilePic, { method: 'HEAD' })
+                    .then(response => {
+                        if (response.ok) {
+                            document.getElementById('profile-pic').src = profilePic;
+                        } else {
+                            document.getElementById('profile-pic').src = 'uploads/default.jpeg';
+                        }
+                    })
+                    .catch(() => {
+                        document.getElementById('profile-pic').src = 'uploads/default.jpeg';
+                    });
+            })
+            .catch(error => {
+                console.error('Error fetching profile:', error);
+                alert('Failed to load profile');
+            });
+    </script>
+
+</body>
+</html>
